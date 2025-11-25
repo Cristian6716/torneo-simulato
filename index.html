@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FantaTournament Bracket</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        .bracket-scroll { -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: #4b5563 #1e293b; }
+        .bracket-scroll::-webkit-scrollbar { height: 8px; }
+        .bracket-scroll::-webkit-scrollbar-track { background: #1e293b; }
+        .bracket-scroll::-webkit-scrollbar-thumb { background-color: #4b5563; border-radius: 20px; }
+        .match-card-bg { background: linear-gradient(145deg, #1e293b, #334155); }
+        .eliminated-team { text-decoration: line-through; opacity: 0.5; filter: grayscale(100%); }
+        .hero-run { border: 1px solid #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.2); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // ==========================================
+        // ⚙️ CONFIGURAZIONE DATI (SIMULAZIONE COMPLETA)
+        // ==========================================
+        
+        const initialData = {
+            matches: [
+                // --- GIORNATA 24 ---
+                { id: 'M1', day: 24, bracket: 'upper', teamA: 'Sesko', teamB: 'Energy', scoreA: 1, scoreB: 3, winner: 'B', eliminated: null }, // Energy vince (Regola 1)
+                { id: 'M2', day: 24, bracket: 'upper', teamA: 'Padre Tempo', teamB: 'Fessa', scoreA: 2, scoreB: 1, winner: 'A', eliminated: null },
+                { id: 'M6', day: 24, bracket: 'mid', teamA: 'Rosk', teamB: 'Napolethanos', scoreA: 2, scoreB: 0, winner: 'A', eliminated: null },
+                { id: 'M7', day: 24, bracket: 'mid', teamA: 'Lang', teamB: 'SohMatta', scoreA: 1, scoreB: 2, winner: 'B', eliminated: null },
+                { id: 'M8', day: 24, bracket: 'mid', teamA: 'Cani', teamB: 'ComeVa', scoreA: 3, scoreB: 2, winner: 'A', eliminated: null },
+                { id: 'M9', day: 24, bracket: 'mid', teamA: 'Fredin', teamB: 'Qara', scoreA: 0, scoreB: 1, winner: 'B', eliminated: null },
+                { id: 'M4', day: 24, bracket: 'lower', teamA: 'FDP', teamB: 'Abyssinian', scoreA: 2, scoreB: 1, winner: 'A', eliminated: 'B' }, // FDP Inizia la scalata (Regola 2)
+                { id: 'M5', day: 24, bracket: 'lower', teamA: 'One Pisa', teamB: 'Rubin', scoreA: 0, scoreB: 2, winner: 'B', eliminated: 'A' },
+
+                // --- GIORNATA 25 ---
+                { id: 'M10', day: 25, bracket: 'mid', teamA: 'Rosk', teamB: 'SohMatta', scoreA: 1, scoreB: 0, winner: 'A', eliminated: null },
+                { id: 'M11', day: 25, bracket: 'mid', teamA: 'Cani', teamB: 'Qara', scoreA: 2, scoreB: 3, winner: 'B', eliminated: null },
+                { id: 'M16', day: 25, bracket: 'mid', teamA: 'Napolethanos', teamB: 'Lang', scoreA: 1, scoreB: 0, winner: 'A', eliminated: null }, // Perdente va in M20
+                { id: 'M17', day: 25, bracket: 'mid', teamA: 'ComeVa', teamB: 'Fredin', scoreA: 4, scoreB: 3, winner: 'A', eliminated: null }, // Perdente va in M21
+
+                // --- GIORNATA 26 ---
+                { id: 'M3', day: 26, bracket: 'upper', teamA: 'Energy', teamB: 'Padre Tempo', scoreA: 2, scoreB: 0, winner: 'A', eliminated: null }, // Energy vince ancora (Regola 1)
+                { id: 'M12', day: 26, bracket: 'mid', teamA: 'Rosk', teamB: 'Sesko', scoreA: 1, scoreB: 3, winner: 'B', eliminated: null },
+                { id: 'M13', day: 26, bracket: 'mid', teamA: 'Qara', teamB: 'Fessa', scoreA: 0, scoreB: 2, winner: 'B', eliminated: null },
+                { id: 'M18', day: 26, bracket: 'lower', teamA: 'SohMatta', teamB: 'Napolethanos', scoreA: 1, scoreB: 2, winner: 'B', eliminated: 'A' },
+                { id: 'M19', day: 26, bracket: 'lower', teamA: 'Cani', teamB: 'ComeVa', scoreA: 2, scoreB: 1, winner: 'A', eliminated: 'B' },
+                { id: 'M20', day: 26, bracket: 'lower', teamA: 'FDP', teamB: 'Lang', scoreA: 3, scoreB: 0, winner: 'A', eliminated: 'B' }, // FDP 2° vittoria
+                { id: 'M21', day: 26, bracket: 'lower', teamA: 'Rubin', teamB: 'Fredin', scoreA: 1, scoreB: 0, winner: 'A', eliminated: 'B' },
+
+                // --- GIORNATA 27 ---
+                { id: 'M14', day: 27, bracket: 'mid', teamA: 'Sesko', teamB: 'Fessa', scoreA: 2, scoreB: 1, winner: 'A', eliminated: null },
+                { id: 'M22', day: 27, bracket: 'lower', teamA: 'Napolethanos', teamB: 'Rosk', scoreA: 0, scoreB: 1, winner: 'B', eliminated: 'A' },
+                { id: 'M23', day: 27, bracket: 'lower', teamA: 'Cani', teamB: 'Qara', scoreA: 1, scoreB: 2, winner: 'B', eliminated: 'A' },
+                { id: 'M24', day: 27, bracket: 'lower', teamA: 'FDP', teamB: 'SohMatta', scoreA: 1, scoreB: 0, winner: 'A', eliminated: 'B' }, // FDP 3° vittoria
+                { id: 'M25', day: 27, bracket: 'lower', teamA: 'Rubin', teamB: 'ComeVa', scoreA: 0, scoreB: 1, winner: 'B', eliminated: 'A' },
+
+                // --- GIORNATA 28 ---
+                { id: 'M15', day: 28, bracket: 'mid', teamA: 'Sesko', teamB: 'Padre Tempo', scoreA: 1, scoreB: 2, winner: 'B', eliminated: null },
+                { id: 'M26', day: 28, bracket: 'lower', teamA: 'Rosk', teamB: 'Qara', scoreA: 3, scoreB: 2, winner: 'A', eliminated: null },
+                { id: 'M27', day: 28, bracket: 'lower', teamA: 'FDP', teamB: 'Napolethanos', scoreA: 2, scoreB: 1, winner: 'A', eliminated: 'B' }, // FDP 4° vittoria
+                { id: 'M28', day: 28, bracket: 'lower', teamA: 'ComeVa', teamB: 'Cani', scoreA: 1, scoreB: 2, winner: 'B', eliminated: 'A' },
+
+                // --- GIORNATA 29 ---
+                { id: 'M30', day: 29, bracket: 'lower', teamA: 'Rosk', teamB: 'Fessa', scoreA: 1, scoreB: 0, winner: 'A', eliminated: 'B' },
+                { id: 'M29', day: 29, bracket: 'lower', teamA: 'FDP', teamB: 'Cani', scoreA: 2, scoreB: 0, winner: 'A', eliminated: 'B' }, // FDP 5° vittoria
+
+                // --- GIORNATA 30 ---
+                { id: 'M31', day: 30, bracket: 'lower', teamA: 'Rosk', teamB: 'Sesko', scoreA: 1, scoreB: 2, winner: 'B', eliminated: null }, // Sesko vince, Rosk cade in M34
+                { id: 'M32', day: 30, bracket: 'lower', teamA: 'FDP', teamB: 'Qara', scoreA: 1, scoreB: 0, winner: 'A', eliminated: 'B' }, // FDP 6° vittoria
+
+                // --- GIORNATA 31 ---
+                { id: 'M33', day: 31, bracket: 'lower', teamA: 'FDP', teamB: 'Fessa', scoreA: 3, scoreB: 2, winner: 'A', eliminated: 'B' }, // FDP 7° vittoria
+
+                // --- GIORNATA 32 ---
+                { id: 'M34', day: 32, bracket: 'lower', teamA: 'FDP', teamB: 'Rosk', scoreA: 1, scoreB: 0, winner: 'A', eliminated: 'B' }, // FDP 8° vittoria (vs Perdente M31)
+
+                // --- GIORNATA 34 (QUARTI) ---
+                { id: 'M35', day: 34, bracket: 'finals', teamA: 'Energy', teamB: 'Padre Tempo', scoreA: 2, scoreB: 1, winner: 'A', label: 'Upper Final', eliminated: null },
+                { id: 'M36', day: 34, bracket: 'finals', teamA: 'Sesko', teamB: 'FDP', scoreA: 2, scoreB: 0, winner: 'A', label: 'Lower Final', eliminated: 'B' }, // FDP eliminato alla 9° Partita!
+
+                // --- GIORNATA 36 (SEMIFINALE) ---
+                { id: 'M37', day: 36, bracket: 'finals', teamA: 'Padre Tempo', teamB: 'Sesko', scoreA: 1, scoreB: 2, winner: 'B', label: 'Semifinale', eliminated: 'A' },
+
+                // --- GIORNATA 38 (FINALE) ---
+                { id: 'Final', day: 38, bracket: 'finals', teamA: 'Energy', teamB: 'Sesko', scoreA: 3, scoreB: 1, winner: 'A', label: 'FINALISSIMA', eliminated: 'B' },
+            ]
+        };
+
+        // ==========================================
+        // ⚛️ APPLICAZIONE REACT
+        // ==========================================
+
+        const TeamRow = ({ teamName, score, isWinner, isEliminated, bracketType }) => {
+            let statusIcon = null;
+            let statusClass = "";
+            let rowBg = isWinner ? 'bg-green-900/30' : (isEliminated ? 'bg-red-900/20' : '');
+
+            // Highlight speciale per FDP (The Hero)
+            if (teamName === 'FDP' && !isEliminated) {
+                rowBg = "bg-amber-500/20 border border-amber-500/30";
+            }
+
+            if (isWinner) {
+                statusIcon = <i className="fas fa-check-circle text-green-400 ml-2"></i>;
+                statusClass = "font-bold text-green-300";
+            } else if (isEliminated) {
+                statusIcon = <i className="fas fa-times-circle text-red-500 ml-2" title="Eliminato"></i>;
+                statusClass = "eliminated-team text-red-400";
+            } else if (score === null) {
+                statusClass = "text-gray-400";
+            }
+
+            let teamIconColor = "text-blue-400";
+            if (bracketType === 'upper') teamIconColor = "text-emerald-400";
+            if (bracketType === 'mid') teamIconColor = "text-amber-400";
+            if (bracketType === 'lower') teamIconColor = "text-rose-400";
+            if (bracketType === 'finals') teamIconColor = "text-purple-400";
+
+            return (
+                <div className={`flex justify-between items-center p-2 rounded-md transition-colors ${rowBg} ${statusClass}`}>
+                    <div className="flex items-center gap-2 truncate">
+                        {teamName === 'FDP' ? 
+                            <i className="fas fa-fire text-orange-500 animate-pulse" title="Hero Run"></i> : 
+                            <i className={`fas fa-shield-alt ${teamIconColor}`}></i>
+                        }
+                        <span className="truncate text-sm">{teamName}</span>
+                        {statusIcon}
+                    </div>
+                    <span className={`font-mono text-lg ${score !== null ? 'font-bold' : 'text-gray-600'}`}>
+                        {score !== null ? score : '-'}
+                    </span>
+                </div>
+            );
+        };
+
+        const MatchCard = ({ match }) => {
+            // Colori in base al bracket
+            let bracketBorder = "border-blue-500/50";
+            let bracketBadge = "bg-blue-500/20 text-blue-300";
+            
+            if (match.bracket === 'upper') {
+                bracketBorder = "border-emerald-500/50";
+                bracketBadge = "bg-emerald-500/20 text-emerald-300";
+            } else if (match.bracket === 'mid') {
+                bracketBorder = "border-amber-500/50";
+                bracketBadge = "bg-amber-500/20 text-amber-300";
+            } else if (match.bracket === 'lower') {
+                bracketBorder = "border-rose-500/50";
+                bracketBadge = "bg-rose-500/20 text-rose-300";
+            } else if (match.bracket === 'finals') {
+                bracketBorder = "border-purple-500/50 shadow-purple-500/20 shadow-md";
+                bracketBadge = "bg-purple-500/20 text-purple-300";
+            }
+
+            const isEliminatedA = match.eliminated === 'A' || match.eliminated === 'both';
+            const isEliminatedB = match.eliminated === 'B' || match.eliminated === 'both';
+
+            return (
+                <div className={`p-3 rounded-xl border ${bracketBorder} match-card-bg flex flex-col gap-3 min-w-[220px] relative overflow-hidden`}>
+                    {/* Sfondo decorativo */}
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 opacity-10 text-6xl">
+                        <i className="fas fa-futbol"></i>
+                    </div>
+
+                    <div className="flex justify-between items-center text-xs relative z-10">
+                        <span className={`px-2.5 py-1 rounded-full font-bold ${bracketBadge}`}>{match.id}</span>
+                        <span className="text-gray-400 font-semibold flex items-center gap-1"><i className="far fa-calendar"></i> G{match.day}</span>
+                    </div>
+                    {match.label && <div className="text-center text-xs font-bold text-purple-300 uppercase tracking-wider relative z-10">{match.label}</div>}
+                    
+                    <div className="flex flex-col gap-2 relative z-10">
+                        {/* Squadra A */}
+                        <TeamRow 
+                            teamName={match.teamA} 
+                            score={match.scoreA} 
+                            isWinner={match.winner === 'A'} 
+                            isEliminated={isEliminatedA}
+                            bracketType={match.bracket}
+                        />
+                        {/* Squadra B */}
+                        <TeamRow 
+                            teamName={match.teamB} 
+                            score={match.scoreB} 
+                            isWinner={match.winner === 'B'} 
+                            isEliminated={isEliminatedB}
+                            bracketType={match.bracket}
+                        />
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [view, setView] = React.useState('schedule'); // 'schedule' o 'bracket'
+            const [matches, setMatches] = React.useState(initialData.matches);
+
+            // Raggruppa per giornata
+            const matchesByDay = matches.reduce((acc, match) => {
+                if (!acc[match.day]) acc[match.day] = [];
+                acc[match.day].push(match);
+                return acc;
+            }, {});
+
+            // Ordina le giornate
+            const sortedDays = Object.keys(matchesByDay).sort((a, b) => a - b);
+
+            return (
+                <div className="max-w-4xl mx-auto min-h-screen pb-14">
+                    {/* Header */}
+                    <header className="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 p-4 sticky top-0 z-50">
+                        <div className="flex justify-between items-center mb-4">
+                            <h1 className="text-2xl font-black flex items-center gap-3 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                                <i className="fas fa-trophy text-yellow-400"></i>
+                                FantaTorneo
+                            </h1>
+                            <div className="text-xs bg-slate-700/50 px-3 py-1.5 rounded-full font-mono text-gray-300 border border-slate-600">
+                                G24 - G38
+                            </div>
+                        </div>
+                        
+                        {/* Navigazione */}
+                        <div className="flex gap-2 p-1 bg-slate-900/50 rounded-xl border border-slate-700/50">
+                            <button 
+                                onClick={() => setView('schedule')}
+                                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${view === 'schedule' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-gray-400 hover:bg-slate-800 hover:text-gray-200'}`}
+                            >
+                                <i className="far fa-calendar-alt"></i> Calendario
+                            </button>
+                            <button 
+                                onClick={() => setView('bracket')}
+                                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${view === 'bracket' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-gray-400 hover:bg-slate-800 hover:text-gray-200'}`}
+                            >
+                                <i className="fas fa-sitemap"></i> Tabellone
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Contenuto */}
+                    <main className="p-4 sm:p-6">
+                        {view === 'schedule' ? (
+                            <div className="space-y-8">
+                                {sortedDays.map(day => (
+                                    <div key={day} className="animate-fade-in">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <span className="bg-slate-800 text-blue-400 text-sm font-bold px-4 py-1.5 rounded-full border border-slate-700 flex items-center gap-2">
+                                                <i className="far fa-clock"></i>
+                                                Giornata {day}
+                                            </span>
+                                            {day == 33 || day == 35 || day == 37 ? <span className="text-xs text-gray-500 italic flex items-center gap-1"><i className="fas fa-pause-circle"></i> Pausa</span> : null}
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {matchesByDay[day].map(match => (
+                                                <MatchCard key={match.id} match={match} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto bracket-scroll pb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
+                                <div className="flex gap-6 min-w-max p-2">
+                                    {/* Visualizzazione Colonne per il Tabellone */}
+                                    {sortedDays.map(day => (
+                                        <div key={day} className="flex flex-col gap-4 w-72">
+                                            <div className="text-center font-bold text-gray-500 text-sm mb-2 border-b-2 border-slate-700 pb-2 flex items-center justify-center gap-2">
+                                                G{day}
+                                            </div>
+                                            {matchesByDay[day].map(match => (
+                                                <MatchCard key={match.id} match={match} />
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </main>
+                    
+                    <footer className="text-center text-gray-500 text-xs p-6 mt-8 border-t border-slate-800 bg-slate-900/50">
+                        <p className="flex items-center justify-center gap-2 mb-2">
+                            <i className="fas fa-code text-blue-500"></i> Fantacalcio Tournament Bracket
+                        </p>
+                        <p className="opacity-60">Powered by React & Tailwind CSS</p>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
